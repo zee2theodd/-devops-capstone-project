@@ -123,11 +123,11 @@ class TestAccountService(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
-    # ADD YOUR TEST CASES HERE ...
     def test_get_account_not_found(self):
         """It should not Read an Account that is not found"""
         resp = self.client.get(f"{BASE_URL}/0")  # Invalid account ID
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
     def test_get_account_list(self):
         """It should Get a list of Accounts"""
         self._create_accounts(5)  # Create 5 test accounts
@@ -135,3 +135,24 @@ class TestAccountService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
         self.assertEqual(len(data), 5)  # Ensure 5 accounts are returned
+
+    def test_update_account(self):
+        """It should Update an existing Account"""
+        # Create an Account to update
+        test_account = AccountFactory()
+        resp = self.client.post(BASE_URL, json=test_account.serialize())
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        # Update the account
+        new_account = resp.get_json()
+        new_account["name"] = "Updated Name"
+        resp = self.client.put(f"{BASE_URL}/{new_account['id']}", json=new_account)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        updated_account = resp.get_json()
+        self.assertEqual(updated_account["name"], "Updated Name")
+
+    def test_delete_account(self):
+        """It should Delete an Account"""
+        account = self._create_accounts(1)[0]  # Create one test account
+        resp = self.client.delete(f"{BASE_URL}/{account.id}")  # Send DELETE request
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
